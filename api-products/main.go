@@ -7,25 +7,37 @@ import (
 	"net"
 
 	"github.com/danubiobwm/curso-grpc/api-products/src/pb/products"
+	"github.com/danubiobwm/curso-grpc/api-products/src/repository"
 	"google.golang.org/grpc"
 )
 
 type server struct {
 	products.ProductServiceServer
+	productRepo *repository.ProductRepository
 }
 
 func (s *server) Create(ctx context.Context, product *products.Product) (*products.Product, error) {
-	return &products.Product{}, nil
+	newProduct, err := s.productRepo.Create(*product)
+	if err != nil {
+		log.Printf("Error creating product: %v", err)
+		return nil, fmt.Errorf("error creating product: %v", err)
+	}
+
+	return &newProduct, nil
 }
 
 func (s *server) FindAll(ctx context.Context, product *products.Product) (*products.ProductList, error) {
-	fmt.Println("FindAll called with product:", product)
-	return &products.ProductList{}, nil
+	productList, err := s.productRepo.FildAll()
+	if err != nil {
+		log.Printf("Error finding products: %v", err)
+		return nil, fmt.Errorf("error finding products: %v", err)
+	}
+	return &productList, nil
 }
 
 func main() {
 	fmt.Println("Starting gRPC server...")
-	srv := server{}
+	srv := server{productRepo: &repository.ProductRepository{}}
 
 	listener, err := net.Listen("tcp", ":9090")
 	if err != nil {
